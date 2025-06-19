@@ -23,7 +23,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('api/v1/', include('api.urls')),
-    # path('videos/', include('video_management.urls')),
+    path('api/v1/dj-rest-auth/', include('dj_rest_auth.urls')),
+    # path('video/', include('video_management.urls')),
 ]
 
 # Only serve media in development

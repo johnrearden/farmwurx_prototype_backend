@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -21,12 +23,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-t*ogonj01=erhva0wga0yhd2goo-mg4q$#3$e86s_$lfjhk#cp"
+SECRET_KEY = str(os.getenv("DJANGO_SECRET_KEY"))
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(os.getenv("DEBUG"))
+DEV = bool(os.getenv("DEV"))
+print(f"DEBUG: {DEBUG}, DEV: {DEV}")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "localhost",
+    "192.168.1.6"
+]
 
 
 # Application definition
@@ -40,9 +47,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party apps
     "rest_framework",
+    "rest_framework.authtoken",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
+    "dj_rest_auth",
     # Developer apps
     "users",
     "api",
@@ -147,7 +156,7 @@ REST_FRAMEWORK = {
         (
             "rest_framework.authentication.SessionAuthentication"
             if "DEV" in os.environ
-            else "dj_rest_auth.jwt_auth.JWTCookieAuthentication"
+            else "rest_framework.authentication.TokenAuthentication"
         )
     ],
     "DEFAULT_RENDERER_CLASSES": [
