@@ -3,5 +3,5 @@ from .views import VideoUploadAPIView
 
 
 urlpatterns = [
-    path('videos/', VideoUploadAPIView.as_view(), name='video-upload'),
+    path('upload_video/', VideoUploadAPIView.as_view(), name='video-upload'),
 ]
