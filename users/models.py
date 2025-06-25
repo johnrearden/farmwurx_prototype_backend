@@ -7,9 +7,9 @@ class CustomUser(AbstractUser):
     Custom user model that extends the default Django user model.
     This allows for future extensibility without changing the default user model.
     """
-    # You can add additional fields here if needed
-    # For example:
-    # bio = models.TextField(blank=True, null=True)
+    push_notification_token = models.CharField(
+        max_length=255, blank=True, null=True, help_text="Token for push notifications"
+    )
     
     def __str__(self):
         return self.username

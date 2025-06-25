@@ -170,3 +170,11 @@ if "DEV" not in os.environ:
     REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
         "rest_framework.renderers.JSONRenderer",
     ]
+
+# Third-party services settings
+GOOGLE_TRANSLATE_API_KEY = str(os.getenv("GOOGLE_TRANSLATE_API_KEY", ""))
+
+# Celery settings
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'

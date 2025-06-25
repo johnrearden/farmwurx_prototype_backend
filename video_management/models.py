@@ -6,7 +6,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from moviepy import VideoFileClip
 
-from .utils import transcribe_audio, write_webvtt
+from .utils import transcribe_audio, write_webvtt, translate_text
 
 class VideoRawUpload(models.Model):
     """
@@ -85,6 +85,13 @@ def process_video(sender, instance, created, **kwargs):
                 instance.transcription = transcription
                 time_elapsed = time.perf_counter() - start_time_transcription
                 instance.audio_transcription_duration = time_elapsed
+
+                # Translate segments using Google Cloud Translation API if needed
+                for segment in segments_list:
+                    source_string = segment.text.strip()
+                    print(f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}")
+                    segment.text = translate_text(source_string, target_lang='hr')
+                    print(f"Translated: {segment.text}")
 
                 # Write WebVTT file
                 vtt_path = os.path.join(

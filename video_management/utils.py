@@ -1,5 +1,7 @@
 import os
+import requests
 from faster_whisper import WhisperModel
+from django.conf import settings
 
 
 def transcribe_audio(audio_path):
@@ -98,3 +100,30 @@ def write_webvtt(segments, output_path="captions.vtt"):
                 f.write("Error creating transcription\n\n")
         except Exception as e2:
             print(f"Failed to create fallback WebVTT file: {e2}")
+
+
+def translate_text(text, target_lang='hr'):
+    """
+    Translate a segment of text to the target language using Google Translate.
+    Args:
+        segment (str): Text segment to translate.
+        target_language (str): Language code for the target language.
+    Returns:
+        str: Translated text.
+    """
+    
+    url = f"https://translation.googleapis.com/language/translate/v2"
+    api_key = settings.GOOGLE_TRANSLATE_API_KEY
+
+    payload = {
+        'q': text,
+        'source': 'en',
+        'target': target_lang,
+        'format': 'text',
+        'key': api_key,
+    }
+
+    response = requests.post(url, data=payload)
+    response.raise_for_status()  # raises an exception for 4xx/5xx errors
+
+    return response.json()['data']['translations'][0]['translatedText']
