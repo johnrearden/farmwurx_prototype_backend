@@ -32,6 +32,7 @@ DEV = bool(os.getenv("DEV"))
 print(f"DEBUG: {DEBUG}, DEV: {DEV}")
 
 ALLOWED_HOSTS = [
+    "46.62.150.15",
     "localhost",
     "192.168.1.6"
 ]
