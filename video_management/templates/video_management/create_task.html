@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Task from Video - FarmWurx{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Create Task from Video</h1>
+            <p class="lead">Fill in the details to create a new task based on this video</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Task Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Task Name*</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.taskee.id_for_label }}" class="form-label">Assign To*</label>
+                            {{ form.taskee }}
+                            {% if form.taskee.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.taskee.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description*</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.due_date.id_for_label }}" class="form-label">Due Date</label>
+                            {{ form.due_date }}
+                            {% if form.due_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.due_date.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.include_video }}
+                            <label class="form-check-label" for="{{ form.include_video.id_for_label }}">
+                                Link video to this task
+                            </label>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.include_transcription }}
+                            <label class="form-check-label" for="{{ form.include_transcription.id_for_label }}">
+                                Include video transcription in description
+                            </label>
+                        </div>
+                        
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Create Task</button>
+                            <a href="{% url 'video_detail' video.id %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Video Source</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if video.thumbnail %}
+                        <img src="{{ video.thumbnail.url }}" class="img-fluid" alt="Video thumbnail">
+                    {% elif video.video %}
+                        <div class="ratio ratio-16x9">
+                            <video controls preload="metadata" class="card-img-top">
+                                <source src="{{ video.video.url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        </div>
+                    {% else %}
+                        <div class="p-3 text-center">
+                            <i class="bi bi-film" style="font-size: 3rem;"></i>
+                            <p>No video preview available</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <p class="mb-0"><strong>Video ID:</strong> {{ video.id }}</p>
+                    <p class="mb-0"><strong>Uploaded:</strong> {{ video.uploaded_at|date:"F j, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* Customize the datetime picker */
+    .flatpickr-calendar {
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize datetime picker for due date
+        flatpickr("#{{ form.due_date.id_for_label }}", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: false,
+            minDate: "today",
+            allowInput: true,
+            altInput: true,
+            altFormat: "F j, Y at h:i K",
+            placeholder: "Select date and time"
+        });
+    });
+</script>
+{% endblock %}

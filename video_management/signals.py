@@ -6,15 +6,6 @@ import os
 import logging
 logger = logging.getLogger("django")
 
-@receiver(post_save, sender=VideoRawUpload)
-def process_video(sender, instance, created, **kwargs):
-    if created and instance.video:
-        try:
-            process_uploaded_video.delay(instance.id)
-        except Exception as e:
-            logger.error(f"Error processing video upload: {e}")
-            # Optionally, you can handle the error further, e.g., notify admins or retry
-
 
 @receiver(pre_delete, sender=VideoRawUpload)
 def delete_video_files(sender, instance, **kwargs):

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "users",
     "api",
     "video_management",
+    "tasks",
 ]
 
 MIDDLEWARE = [

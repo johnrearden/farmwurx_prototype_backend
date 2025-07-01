@@ -4,6 +4,7 @@ import requests
 import logging
 logger = logging.getLogger("django")
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from celery import shared_task
 from .models import VideoRawUpload
 from .utils import (
@@ -15,10 +16,16 @@ from moviepy import VideoFileClip
 
 EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send"
 
+User = get_user_model()  # Assuming you have a User model defined in your settings
+
 
 @shared_task
-def process_uploaded_video(video_id):
+def process_uploaded_video(video_id, taskee_id=None):
     instance = VideoRawUpload.objects.get(id=video_id)
+    taskee_id = taskee_id or instance.user.id
+    taskee = User.objects.get(id=taskee_id)
+    language_code = taskee.main_language if taskee.main_language else 'en'
+    print(f"Processing video {video_id} for user {taskee.username} in language {language_code}")
     if not instance.video:
         logger.error(f"No video file found for video ID {video_id}.")
         raise ValueError("No video file found for the provided video ID.")
@@ -26,12 +33,12 @@ def process_uploaded_video(video_id):
     video_path = instance.video.path
     base_name = os.path.splitext(os.path.basename(video_path))[0]
     
-
+    # Extract the audio clip from the video
     try:
         clip = VideoFileClip(video_path)
         instance.duration = clip.duration
 
-        if not instance.audio:
+        if not instance.audio or True:
             # Extract audio
             start = time.perf_counter()
             audio_path = os.path.join(
@@ -66,7 +73,7 @@ def process_uploaded_video(video_id):
         for s in segments_list:
             s.text = translate_text(
                 s.text.strip(),
-                target_lang='es'
+                target_lang=language_code
             )
     except Exception as e:
         logger.error(f"Error during transcription: {e}")
@@ -115,7 +122,7 @@ def process_uploaded_video(video_id):
 
     try:
         # Notify the client that the video and vtt file are ready
-        expo_token = instance.user.push_notification_token
+        expo_token = taskee.push_notification_token
         message = {
             "to": expo_token,
             "sound": "default",

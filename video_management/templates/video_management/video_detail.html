@@ -5,9 +5,12 @@
 {% block content %}
 <div class="container">
     <!-- Back button -->
-    <div class="mb-4">
-        <a href="{% url 'home' %}" class="btn btn-secondary">
+    <div class="mb-4 d-flex gap-2">
+        <a href="{% url 'video_list' %}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Back to Videos
+        </a>
+        <a href="{% url 'create_task_from_video' video.id %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create task using this video
         </a>
     </div>
     

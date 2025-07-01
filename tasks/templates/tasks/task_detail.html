@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.name }} - FarmWurx{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>{{ task.name }}</h1>
+                <a href="{% url 'task_list' %}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Tasks
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Task description -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Description</h5>
+                </div>
+                <div class="card-body">
+                    {{ task.description|linebreaks }}
+                </div>
+            </div>
+
+            <!-- Related video (if any) -->
+            {% if task.video %}
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Related Video</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="ratio ratio-16x9">
+                        <video controls preload="metadata" class="card-img-top">
+                            <source src="{{ task.video.video.url }}" type="video/mp4">
+                            {% if task.video.vtt_file %}
+                            <track label="English" kind="subtitles" srclang="en" src="{{ task.video.vtt_file.url }}" default>
+                            {% endif %}
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'video_detail' task.video.id %}" class="btn btn-primary">
+                        <i class="bi bi-film"></i> View Full Video Details
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Task details -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Task Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-hover">
+                        <tbody>
+                            <tr>
+                                <th scope="row">Assigned To</th>
+                                <td>{{ task.taskee.username }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Created By</th>
+                                <td>{{ task.tasker.username }}</td>
+                            </tr>
+                            <tr>
+                                <th scope="row">Created On</th>
+                                <td>{{ task.created_at|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                            {% if task.due_date %}
+                            <tr>
+                                <th scope="row">Due Date</th>
+                                <td>{{ task.due_date|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th scope="row">Last Updated</th>
+                                <td>{{ task.updated_at|date:"F j, Y, g:i a" }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer d-grid gap-2">
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+                        <i class="bi bi-trash"></i> Delete Task
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Task Modal -->
+<div class="modal fade" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTaskModalLabel">Delete Task</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the task "{{ task.name }}"?</p>
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{% url 'task_delete' task.id %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+{% endblock %}
