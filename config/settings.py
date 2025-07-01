@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 from dotenv import load_dotenv
+
 load_dotenv()
 import os
 
@@ -31,11 +32,7 @@ DEBUG = bool(os.getenv("DEBUG"))
 DEV = bool(os.getenv("DEV"))
 print(f"DEBUG: {DEBUG}, DEV: {DEV}")
 
-ALLOWED_HOSTS = [
-    "46.62.150.15",
-    "localhost",
-    "192.168.1.6"
-]
+ALLOWED_HOSTS = ["46.62.150.15", "localhost", "192.168.1.6"]
 
 
 # Application definition
@@ -177,5 +174,28 @@ GOOGLE_TRANSLATE_API_KEY = str(os.getenv("GOOGLE_TRANSLATE_API_KEY", ""))
 
 # Celery settings
 CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+
+# Django Logging configuration
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": str(os.getenv("DJANGO_LOG_FILE")),
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"], 
+            "level": "INFO",
+            "propogate": True,
+        }
+    },
+}
