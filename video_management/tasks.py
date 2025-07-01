@@ -1,6 +1,8 @@
 import os
 import time
 import requests
+import logging
+logger = logging.getLogger("django")
 from django.conf import settings
 from celery import shared_task
 from .models import VideoRawUpload
@@ -10,6 +12,7 @@ from .utils import (
 from moviepy import VideoFileClip
 
 
+
 EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send"
 
 
@@ -17,11 +20,13 @@ EXPO_PUSH_ENDPOINT = "https://exp.host/--/api/v2/push/send"
 def process_uploaded_video(video_id):
     instance = VideoRawUpload.objects.get(id=video_id)
     if not instance.video:
+        logger.error(f"No video file found for video ID {video_id}.")
         raise ValueError("No video file found for the provided video ID.")
     
     video_path = instance.video.path
     base_name = os.path.splitext(os.path.basename(video_path))[0]
     
+
     try:
         clip = VideoFileClip(video_path)
         instance.duration = clip.duration
@@ -37,39 +42,61 @@ def process_uploaded_video(video_id):
             os.makedirs(os.path.dirname(audio_path), exist_ok=True)
             clip.audio.write_audiofile(audio_path)
             instance.audio_extraction_duration = time.perf_counter() - start
+        else:
+            logger.warning("Audio already extracted, skipping extraction.")
+            return
+    except Exception as e:
+        logger.error(f"Error extracting audio: {e}")
 
-            # Transcribe audio
-            start_transcription = time.perf_counter()
-            transcription, segments_list, _ = transcribe_audio(audio_path)
-            instance.transcription = transcription
-            instance.audio_transcription_duration = (
-                time.perf_counter() - start_transcription
+
+    try:
+        # Transcribe audio
+        start_transcription = time.perf_counter()
+        transcription, segments_list, _ = transcribe_audio(audio_path)
+        instance.transcription = transcription
+        instance.audio_transcription_duration = (
+            time.perf_counter() - start_transcription
+        )
+    except Exception as e:
+        logger.error(f"Error during transcription: {e}")
+
+
+    try:
+        # Translate transcription
+        for s in segments_list:
+            s.text = translate_text(
+                s.text.strip(),
+                target_lang='es'
             )
+    except Exception as e:
+        logger.error(f"Error during transcription: {e}")
 
-            for s in segments_list:
-                s.text = translate_text(
-                    s.text.strip(),
-                    target_lang='es'
-                )
-            
-            vtt_path = os.path.join(
-                settings.MEDIA_ROOT,
-                'captions',
-                f"{base_name}.vtt"
-            )
-            os.makedirs(os.path.dirname(vtt_path), exist_ok=True)
-            write_webvtt(segments_list, output_path=vtt_path)
 
-            if os.path.exists(vtt_path) and os.path.getsize(vtt_path) > 0:
-                instance.vtt_file = os.path.relpath(
-                    vtt_path,
-                    settings.MEDIA_ROOT
-                )
-            instance.audio = os.path.relpath(
-                audio_path,
+    try:
+        # Write WebVTT file
+        vtt_path = os.path.join(
+            settings.MEDIA_ROOT,
+            'captions',
+            f"{base_name}.vtt"
+        )
+        os.makedirs(os.path.dirname(vtt_path), exist_ok=True)
+        write_webvtt(segments_list, output_path=vtt_path)
+
+        if os.path.exists(vtt_path) and os.path.getsize(vtt_path) > 0:
+            instance.vtt_file = os.path.relpath(
+                vtt_path,
                 settings.MEDIA_ROOT
             )
+        instance.audio = os.path.relpath(
+            audio_path,
+            settings.MEDIA_ROOT
+        )
+    except Exception as e:
+        logger.error(f"Error writing WebVTT file: {e}")
 
+
+    try:        
+        # Generate thumbnail if not already present
         if not instance.thumbnail:
             thumb_path = os.path.join(settings.MEDIA_ROOT, 'thumbnails', f"{base_name}.jpg")
             os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
@@ -79,10 +106,14 @@ def process_uploaded_video(video_id):
 
         clip.close()
         instance.save()
+    except Exception as e:
+        logger.error(f"Error generating thumbnail or saving instance: {e}")
 
-        print("*" * 20)
-        print(f"Processed video {video_id} successfully.")
+    # Log the successful processing of the video
+    logger.info(f"Processed video {video_id} successfully.")
 
+
+    try:
         # Notify the client that the video and vtt file are ready
         expo_token = instance.user.push_notification_token
         message = {
@@ -106,8 +137,8 @@ def process_uploaded_video(video_id):
         }
 
         response = requests.post(EXPO_PUSH_ENDPOINT, json=message, headers=headers)
-        print(f"Expo push notification response: {response.status_code} - {response.text}")
+        logger.info(f"Expo push notification response: {response.status_code} - {response.text}")
         response.raise_for_status()
 
     except Exception as e:
-        print(f"Error in Celery task: {e}")
+        logger.error(f"Error sending push notification: {e}")
