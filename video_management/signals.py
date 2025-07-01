@@ -3,11 +3,17 @@ from django.dispatch import receiver
 from .models import VideoRawUpload
 from .tasks import process_uploaded_video
 import os
+import logging
+logger = logging.getLogger("django")
 
 @receiver(post_save, sender=VideoRawUpload)
 def process_video(sender, instance, created, **kwargs):
     if created and instance.video:
-        process_uploaded_video.delay(instance.id)
+        try:
+            process_uploaded_video.delay(instance.id)
+        except Exception as e:
+            logger.error(f"Error processing video upload: {e}")
+            # Optionally, you can handle the error further, e.g., notify admins or retry
 
 
 @receiver(pre_delete, sender=VideoRawUpload)
