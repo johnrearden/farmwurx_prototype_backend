@@ -32,7 +32,13 @@ DEBUG = bool(os.getenv("DEBUG"))
 DEV = bool(os.getenv("DEV"))
 print(f"DEBUG: {DEBUG}, DEV: {DEV}")
 
-ALLOWED_HOSTS = ["46.62.150.15", "localhost", "192.168.1.6"]
+ALLOWED_HOSTS = [
+    "46.62.150.15",
+    "localhost",
+    "192.168.1.6",
+    "farmwurxdev.com",
+    "www.farmwurxdev.com",
+]
 
 
 # Application definition
@@ -138,6 +144,7 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+
 # Default media settings (used in dev)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -200,3 +207,13 @@ LOGGING = {
         }
     },
 }
+
+# Sentry configuration
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="https://3b95127cd0c13260e67e2392039fd656@o4509598102978560.ingest.de.sentry.io/4509598105993296",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
